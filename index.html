@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Email Assistant</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #f4f7fb;
+    color: #172033;
+}
+
+header {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: white;
+    padding: 25px 7%;
+}
+
+header h1 {
+    font-size: 30px;
+}
+
+header p {
+    margin-top: 7px;
+    opacity: .9;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto;
+}
+
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 20px rgba(0,0,0,.07);
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 10px;
+}
+
+textarea {
+    width: 100%;
+    height: 220px;
+    padding: 15px;
+    border: 1px solid #d5d9e2;
+    border-radius: 10px;
+    resize: vertical;
+    outline: none;
+    font-size: 15px;
+}
+
+textarea:focus {
+    border-color: #6366f1;
+}
+
+button {
+    margin-top: 15px;
+    padding: 13px 25px;
+    border: none;
+    border-radius: 9px;
+    background: #4f46e5;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #3730a3;
+}
+
+button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.loader {
+    display: none;
+    margin-top: 15px;
+    color: #4f46e5;
+    font-weight: bold;
+}
+
+.results {
+    display: none;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 18px;
+}
+
+.result-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 5px solid #4f46e5;
+}
+
+.result-card h3 {
+    margin-bottom: 12px;
+    font-size: 17px;
+}
+
+.result-card p,
+.result-card li {
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.result-card ul {
+    padding-left: 20px;
+}
+
+.high {
+    color: #dc2626 !important;
+    font-weight: bold;
+}
+
+.medium {
+    color: #d97706 !important;
+    font-weight: bold;
+}
+
+.low {
+    color: #16a34a !important;
+    font-weight: bold;
+}
+
+.reply {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 10px;
+    line-height: 1.6;
+}
+
+.footer {
+    text-align: center;
+    padding: 25px;
+    color: #6b7280;
+}
+
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-weight: bold;
+}
+
+@media(max-width:600px) {
+    header h1 {
+        font-size: 24px;
+    }
+
+    .container {
+        width: 94%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🤖 AI Email Assistant</h1>
+    <p>Analyze emails, detect priority, extract tasks and generate smart replies.</p>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <label>📧 Paste Email Content</label>
+
+        <textarea id="emailInput"
+        placeholder="Paste your email here...
+
+Example:
+Dear Student,
+Your project submission is due tomorrow at 5 PM.
+Please submit the final report and presentation before the deadline.
+Regards,
+Project Coordinator"></textarea>
+
+        <button id="analyzeBtn" onclick="analyzeEmail()">
+            🚀 Analyze Email
+        </button>
+
+        <div class="loader" id="loader">
+            🤖 AI is analyzing the email...
+        </div>
+    </div>
+
+
+    <div class="results" id="results">
+
+        <div class="grid">
+
+            <div class="result-card">
+                <h3>📌 Summary</h3>
+                <p id="summary"></p>
+            </div>
+
+            <div class="result-card">
+                <h3>🚨 Priority</h3>
+                <p id="priority"></p>
+            </div>
+
+            <div class="result-card">
+                <h3>📂 Category</h3>
+                <p id="category"></p>
+            </div>
+
+            <div class="result-card">
+                <h3>🛡️ Security</h3>
+                <p id="security"></p>
+            </div>
+
+            <div class="result-card">
+                <h3>😊 Sentiment</h3>
+                <p id="sentiment"></p>
+            </div>
+
+            <div class="result-card">
+                <h3>⏰ Deadline</h3>
+                <p id="deadline"></p>
+            </div>
+
+            <div class="result-card">
+                <h3>📅 Meeting / Event</h3>
+                <p id="meeting"></p>
+            </div>
+
+            <div class="result-card">
+                <h3>🔔 Follow-up</h3>
+                <p id="followup"></p>
+            </div>
+
+        </div>
+
+        <br>
+
+        <div class="card">
+            <h2>✅ Tasks / Action Items</h2>
+            <br>
+            <ul id="tasks"></ul>
+        </div>
+
+        <div class="card">
+            <h2>🤖 AI Suggested Reply</h2>
+            <br>
+
+            <div class="reply" id="reply"></div>
+
+            <button onclick="copyReply()">
+                📋 Copy Reply
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>AI Email Assistant • Hackathon Prototype</p>
+</div>
+
+
+<script>
+
+function analyzeEmail() {
+
+    const email = document.getElementById("emailInput").value.trim();
+
+    if (!email) {
+        alert("Please paste an email first.");
+        return;
+    }
+
+    const btn = document.getElementById("analyzeBtn");
+    const loader = document.getElementById("loader");
+    const results = document.getElementById("results");
+
+    btn.disabled = true;
+    loader.style.display = "block";
+    results.style.display = "none";
+
+    setTimeout(() => {
+
+        const text = email.toLowerCase();
+
+        /* PRIORITY */
+
+        let priority = "Low";
+        let priorityClass = "low";
+
+        const highWords = [
+            "urgent",
+            "immediately",
+            "deadline",
+            "today",
+            "tomorrow",
+            "asap",
+            "critical",
+            "important",
+            "due"
+        ];
+
+        const mediumWords = [
+            "please",
+            "submit",
+            "meeting",
+            "reply",
+            "response",
+            "required"
+        ];
+
+        if (highWords.some(word => text.includes(word))) {
+            priority = "High";
+            priorityClass = "high";
+        } else if (mediumWords.some(word => text.includes(word))) {
+            priority = "Medium";
+            priorityClass = "medium";
+        }
+
+
+        /* CATEGORY */
+
+        let category = "Other";
+
+        if (
+            text.includes("exam") ||
+            text.includes("student") ||
+            text.includes("assignment") ||
+            text.includes("college") ||
+            text.includes("project")
+        ) {
+            category = "Education";
+        }
+        else if (
+            text.includes("meeting") ||
+            text.includes("schedule") ||
+            text.includes("conference")
+        ) {
+            category = "Meeting";
+        }
+        else if (
+            text.includes("payment") ||
+            text.includes("invoice") ||
+            text.includes("bank")
+        ) {
+            category = "Finance";
+        }
+        else if (
+            text.includes("job") ||
+            text.includes("office") ||
+            text.includes("work") ||
+            text.includes("company")
+        ) {
+            category = "Work";
+        }
+        else if (
+            text.includes("sale") ||
+            text.includes("offer") ||
+            text.includes("discount")
+        ) {
+            category = "Promotion";
+        }
+
+
+        /* SPAM / PHISHING */
+
+        let security = "✅ Safe";
+
+        const suspiciousWords = [
+            "password",
+            "verify your account",
+            "click here",
+            "winner",
+            "lottery",
+            "otp",
+            "bank details",
+            "urgent payment",
+            "claim your prize"
+        ];
+
+        if (suspiciousWords.some(word => text.includes(word))) {
+            security = "⚠️ Suspicious / Possible Phishing";
+        }
+
+
+        /* SENTIMENT */
+
+        let sentiment = "Neutral";
+
+        if (
+            text.includes("thank") ||
+            text.includes("congratulations") ||
+            text.includes("great") ||
+            text.includes("happy")
+        ) {
+            sentiment = "Positive";
+        }
+
+        if (
+            text.includes("problem") ||
+            text.includes("issue") ||
+            text.includes("failed") ||
+            text.includes("complaint")
+        ) {
+            sentiment = "Negative";
+        }
+
+        if (
+            text.includes("urgent") ||
+            text.includes("immediately") ||
+            text.includes("asap")
+        ) {
+            sentiment = "Urgent";
+        }
+
+
+        /* DEADLINE */
+
+        let deadline = "Not mentioned";
+
+        const deadlineWords = [
+            "today",
+            "tomorrow",
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+            "deadline",
+            "due"
+        ];
+
+        let foundDates = deadlineWords.filter(word => text.includes(word));
+
+        if (foundDates.length > 0) {
+            deadline = foundDates.join(", ");
+        }
+
+
+        /* MEETING */
+
+        let meeting = "Not mentioned";
+
+        if (
+            text.includes("meeting") ||
+            text.includes("conference") ||
+            text.includes("call")
+        ) {
+            meeting = "📅 Meeting/Event information detected";
+        }
+
+
+        /* TASKS */
+
+        let tasks = [];
+
+        if (
+            text.includes("submit") ||
+            text.includes("send") ||
+            text.includes("complete") ||
+            text.includes("finish")
+        ) {
+            tasks.push("Complete the requested action mentioned in the email.");
+        }
+
+        if (text.includes("reply") || text.includes("response")) {
+            tasks.push("Reply to the sender.");
+        }
+
+        if (text.includes("meeting")) {
+            tasks.push("Attend or prepare for the mentioned meeting.");
+        }
+
+        if (tasks.length === 0) {
+            tasks.push("No specific task detected.");
+        }
+
+
+        /* SUMMARY */
+
+        let summary;
+
+        if (email.length > 250) {
+            summary =
+                "This email contains important information that may require the recipient's attention. Key requests, deadlines and actions have been identified below.";
+        } else {
+            summary =
+                email.replace(/\s+/g, " ").substring(0, 220);
+        }
+
+
+        /* REPLY */
+
+        let reply =
+`Dear Sender,
+
+Thank you for your email. I have reviewed the information and noted the mentioned requirements and deadlines.
+
+I will take the necessary action accordingly.
+
+Best regards,
+[Your Name]`;
+
+
+        /* FOLLOW UP */
+
+        let followup = "No";
+
+        if (
+            priority === "High" ||
+            tasks.length > 0
+        ) {
+            followup = "Yes — follow-up may be required.";
+        }
+
+
+        /* DISPLAY */
+
+        document.getElementById("summary").textContent = summary;
+
+        const priorityElement = document.getElementById("priority");
+        priorityElement.textContent = priority;
+        priorityElement.className = priorityClass;
+
+        document.getElementById("category").textContent = category;
+        document.getElementById("security").textContent = security;
+        document.getElementById("sentiment").textContent = sentiment;
+        document.getElementById("deadline").textContent = deadline;
+        document.getElementById("meeting").textContent = meeting;
+        document.getElementById("followup").textContent = followup;
+        document.getElementById("reply").textContent = reply;
+
+        const taskList = document.getElementById("tasks");
+        taskList.innerHTML = "";
+
+        tasks.forEach(task => {
+            const li = document.createElement("li");
+            li.textContent = task;
+            taskList.appendChild(li);
+        });
+
+        loader.style.display = "none";
+        results.style.display = "block";
+        btn.disabled = false;
+
+    }, 1200);
+}
+
+
+function copyReply() {
+
+    const reply = document.getElementById("reply").innerText;
+
+    navigator.clipboard.writeText(reply);
+
+    alert("Reply copied successfully!");
+}
+
+</script>
+
+</body>
+</html>
